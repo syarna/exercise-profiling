@@ -7,14 +7,10 @@ import com.advpro.profiling.tutorial.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * @author muhammad.khadafi
- */
 @Service
 public class StudentService {
 
@@ -25,33 +21,18 @@ public class StudentService {
     private StudentCourseRepository studentCourseRepository;
 
     public List<StudentCourse> getAllStudentsWithCourses() {
-        return studentRepository.findAll().stream()
-                .flatMap(student -> studentCourseRepository.findByStudentId(student.getId()).stream()
-                        .map(course -> new StudentCourse(student, course.getCourse())))
-                .collect(Collectors.toList());
+        // Optimize by fetching all data in one query
+        return studentCourseRepository.findAllWithStudents();
     }
 
-
     public Optional<Student> findStudentWithHighestGpa() {
-        List<Student> students = studentRepository.findAll();
-        Student highestGpaStudent = null;
-        double highestGpa = 0.0;
-        for (Student student : students) {
-            if (student.getGpa() > highestGpa) {
-                highestGpa = student.getGpa();
-                highestGpaStudent = student;
-            }
-        }
-        return Optional.ofNullable(highestGpaStudent);
+        // Optimize by fetching the highest GPA directly from DB
+        return studentRepository.findTopByOrderByGpaDesc();
     }
 
     public String joinStudentNames() {
-        List<Student> students = studentRepository.findAll();
-        String result = "";
-        for (Student student : students) {
-            result += student.getName() + ", ";
-        }
-        return result.substring(0, result.length() - 2);
+        // Optimize by fetching only names from DB
+        return studentRepository.findAllNames().stream()
+                .collect(Collectors.joining(", "));
     }
 }
-
